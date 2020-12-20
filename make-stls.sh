@@ -31,7 +31,8 @@ options="--hardwarnings --check-parameters true --check-parameter-ranges true ${
 
 for x in {1..4}; do
 	for y in {1..4}; do
-		if [ "${x}" == 2 ] && [ "${y}" == 1 ]; then
+		# skip combinations which would create duplicates
+		if [ ${x} -gt ${y} ]; then
 			continue
 		else
 			file="${outDir}/kcup-mesh_${x}x${y}.stl"
