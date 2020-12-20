@@ -14,80 +14,107 @@ notchWidth = wallThickness * 4;
 notchSpacing = .4;
 
 module Holder(xCount = 1, yCount = 1) {
-    totalBaseWidthX = baseWidth * xCount + (xCount - 1) * notchWidth;
-    totalBaseWidthY = baseWidth * yCount + (yCount - 1) * notchWidth;
+    totalBaseWidthX = (baseWidth * xCount) + ((xCount - 1) * notchWidth);
+    totalBaseWidthY = (baseWidth * yCount) + ((yCount - 1) * notchWidth);
     kcupOffset = ((kcupTopDiameter + kcupSideSpacing) / 2) + kcupTopSpacing - 1;
+    cutoutOffset = kcupTopDiameter + kcupTopSpacing;
     
-    rotate([0, 180, 0]) {
-        difference() {
-            union() {
-                difference() {
-                    cube(size = [totalBaseWidthX, totalBaseWidthY, baseHeight]);
-            
-                    translate([wallThickness, wallThickness, 0]) {
-                        cube(size = [totalBaseWidthX - wallThickness * 2, totalBaseWidthY - wallThickness * 2, baseHeight - wallThickness]);
-                    }
-                }
-            
-                for (x = [0 : xCount - 1]) {
-                    for (y = [0 : yCount - 1]) {
-                        translate([kcupOffset + x * (baseWidth + notchWidth), kcupOffset + y * (baseWidth + notchWidth), -wallThickness]) {
-                            cylinder(
-                                d1 = kcupBottomDiameter + kcupSideSpacing + wallThickness, 
-                                d2 = kcupTopDiameter + kcupSideSpacing + wallThickness, 
-                                h = kcupHeight
-                            );
-                        }
-                    }
+    difference() {
+        /* main cube */
+        union() {
+            difference() {
+                cube(size = [totalBaseWidthX, totalBaseWidthY, baseHeight]);
+        
+                translate([wallThickness, wallThickness, wallThickness]) {
+                    cube(size = [totalBaseWidthX - wallThickness * 2, totalBaseWidthY - wallThickness * 2, baseHeight - wallThickness]);
                 }
             }
-            
-            translate([0, 0, baseHeight]) {
-                cube(size = [totalBaseWidthX, totalBaseWidthY, kcupHeight]);
-            }
-            
+        
+            /* K-Cup walls */
             for (x = [0 : xCount - 1]) {
                 for (y = [0 : yCount - 1]) {
                     translate([kcupOffset + x * (baseWidth + notchWidth), kcupOffset + y * (baseWidth + notchWidth), 0]) {
-                        cylinder(d1 = kcupBottomDiameter + kcupSideSpacing, d2 = kcupTopDiameter + kcupSideSpacing, h = kcupHeight);
-                        
-                        translate([0, 0, -wallThickness]) {
-                            cylinder(
-                                d1 = kcupBottomDiameter + kcupSideSpacing, 
-                                d2 = kcupBottomDiameter + kcupSideSpacing, 
-                                h = wallThickness * 2
-                            );
-                        }
+                        cylinder(
+                            d1 = kcupBottomDiameter + kcupSideSpacing + wallThickness, 
+                            d2 = kcupTopDiameter + kcupSideSpacing + wallThickness, 
+                            h = kcupHeight
+                        );
                     }
                 }
             }
         }
         
-        translate([0, -notchWidth + wallThickness, 0]) {
-            resize([totalBaseWidthX, 0, 0]) {
+        /* cube inset */
+        translate([0, 0, baseHeight]) {
+            cube(size = [totalBaseWidthX, totalBaseWidthY, kcupHeight]);
+        }
+        
+        /* K-Cup cutouts */
+        for (x = [0 : xCount - 1]) {
+            for (y = [0 : yCount - 1]) {
+                translate([kcupOffset + x * (baseWidth + notchWidth), kcupOffset + y * (baseWidth + notchWidth), 0]) {
+                    cylinder(d1 = kcupBottomDiameter + kcupSideSpacing, d2 = kcupTopDiameter + kcupSideSpacing, h = kcupHeight);
+                    
+                    translate([0, 0, -wallThickness]) {
+                        cylinder(
+                            d1 = kcupBottomDiameter + kcupSideSpacing, 
+                            d2 = kcupBottomDiameter + kcupSideSpacing, 
+                            h = wallThickness * 2
+                        );
+                    }
+                }
+            }
+        }
+        
+        /* other cutouts */
+        for (x = [0 : xCount]) {
+            for (y = [0 : yCount]) {
+                translateX = (x * baseWidth) + (x * kcupTopSpacing) + ((x - 1) * (notchWidth / 2));
+                translateY = (y * baseWidth) + (y * kcupTopSpacing) + ((y - 1) * (notchWidth / 2));
+                diameter = kcupBottomDiameter + kcupTopSpacing;
+                
+                translate([translateX, translateY, wallThickness / 2]) {
+                    cylinder(d1 = diameter, d2 = diameter + wallThickness, h = wallThickness, center = true);
+                }
+            }
+        }
+    }
+    
+    /* notches */
+    translate([0, -notchWidth + wallThickness, 0]) {
+        resize([totalBaseWidthX, 0, 0]) {
+            NotchOuter();
+        }
+    }
+    
+    translate([totalBaseWidthX + notchWidth - wallThickness, 0, 0]) {
+        rotate([0, 0, 90]) {
+            resize([totalBaseWidthY, 0, 0]) {
                 NotchOuter();
             }
         }
-        
-        translate([totalBaseWidthX + notchWidth - wallThickness, 0, 0]) {
-            rotate([0, 0, 90]) {
-                resize([totalBaseWidthY, 0, 0]) {
-                    NotchOuter();
-                }
-            }
+    }
+    
+    translate([0, totalBaseWidthY, 0]) {
+        resize([totalBaseWidthX, 0, 0]) {
+            NotchInner();
         }
         
-        translate([0, totalBaseWidthY, 0]) {
-            resize([totalBaseWidthX, 0, 0]) {
+        // fill in gaps from cutouts
+        translate([0, -wallThickness, 0]) {
+            cube(size = [totalBaseWidthX, wallThickness, baseHeight]);
+        }
+    }
+    
+    translate([0, 0, 0]) {
+        rotate([0, 0, 90]) {
+            resize([totalBaseWidthY, 0, 0]) {
                 NotchInner();
             }
-        }
-        
-        translate([0, 0, 0]) {
-            rotate([0, 0, 90]) {
-                resize([totalBaseWidthY, 0, 0]) {
-                    NotchInner();
-                }
+            
+            // fill in gaps from cutouts
+            translate([0, -wallThickness, 0]) {
+                cube(size = [totalBaseWidthX, wallThickness, baseHeight]);
             }
         }
     }
@@ -104,8 +131,8 @@ module NotchOuter() {
                     [0, wallThickness * 4], 
                     [0, wallThickness],
                     [wallThickness, wallThickness],
-                    [wallThickness * 2, wallThickness * 1.5],
-                    [wallThickness, wallThickness * 2],
+                    [wallThickness * 1.5, wallThickness * 1.5],
+                    [wallThickness, wallThickness * 3],
                     [wallThickness, wallThickness * 3],
                     [wallThickness * 3, wallThickness * 3],
                     [wallThickness * 3, 0]
@@ -123,10 +150,9 @@ module NotchInner() {
                     [0, 0],
                     [wallThickness * 3 - notchSpacing, 0], 
                     [wallThickness * 3 - notchSpacing, wallThickness * 3 - notchSpacing], 
-                    [wallThickness + notchSpacing, wallThickness * 3 - notchSpacing], 
-                    [wallThickness + notchSpacing, wallThickness * 2 + notchSpacing],
-                    [wallThickness * 2 + notchSpacing, wallThickness * 1.5 + notchSpacing],
-                    [wallThickness * 2 + notchSpacing, wallThickness * 1.5 - notchSpacing],
+                    [wallThickness + (notchSpacing * 1.5), wallThickness * 3 - notchSpacing], 
+                    [wallThickness * 1.5 + notchSpacing, wallThickness * 1.5 + notchSpacing],
+                    [wallThickness * 1.5 + notchSpacing, wallThickness * 1.5 - notchSpacing],
                     [wallThickness + notchSpacing, wallThickness  - notchSpacing],
                     [0, wallThickness - notchSpacing],
                     [0, 0]
@@ -156,4 +182,7 @@ if (action != undef) {
     if (action == "holder") {
         Holder(x, y);
     }
+}
+else {
+    Holder(2, 5);
 }
