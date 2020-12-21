@@ -114,7 +114,7 @@ module Holder(xCount = 1, yCount = 1) {
             
             // fill in gaps from cutouts
             translate([0, -wallThickness, 0]) {
-                cube(size = [totalBaseWidthX, wallThickness, baseHeight]);
+                cube(size = [totalBaseWidthY, wallThickness, baseHeight]);
             }
         }
     }
